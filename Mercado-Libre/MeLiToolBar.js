@@ -2238,7 +2238,6 @@ function disableButtons (page, listOfButtonsToDisable) {
             cursor: "pointer",
             fontWeight: "600",
             fontSize: "12px",
-            zIndex: "9999",
             boxShadow: "0 4px 10px rgba(0,0,0,.15)"
         });
 

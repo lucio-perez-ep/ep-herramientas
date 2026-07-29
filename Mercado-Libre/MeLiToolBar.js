@@ -7,11 +7,28 @@
 // @match               https://*.mercadolibre.com.ar/ventas/omni/*
 // @match               https://*.mercadolibre.com.ar/publicaciones*
 // @match               https://*.mercadolibre.com.ar/publicaciones/listado*
-// @grant				none
+// @grant               none
+// @noframes
 // ==/UserScript==
 
+if (window.self !== window.top) {
+  return
+}
+
 // Create the toolbar and append it to the body
-createToolbar()
+const allowedPaths = [
+    /^\/publicaciones$/,
+    /^\/publicaciones\/listado/,
+    /^\/ventas\/omni\/listado$/
+];
+
+const isAllowedPage = allowedPaths.some(regex =>
+    regex.test(window.location.pathname)
+);
+
+if (isAllowedPage) {
+    createToolbar();
+}
 
 // Check page and disable corresponding buttons
 const currentUrl = window.location.href
@@ -2193,7 +2210,6 @@ function disableButtons (page, listOfButtonsToDisable) {
 
     function getConfig() {
         const path = window.location.pathname;
-
         return pages.find(p => p.match.test(path));
     }
 
@@ -2240,15 +2256,11 @@ function disableButtons (page, listOfButtonsToDisable) {
                 button.textContent = "¡Copiado!";
 
                 setTimeout(() => {
-
                     button.textContent = txt;
-
                 }, 2000);
 
             } catch (err) {
-
                 console.error(err);
-
             }
 
         });
@@ -2267,6 +2279,9 @@ function disableButtons (page, listOfButtonsToDisable) {
 
         items.forEach(item => {
 
+            if (!rows.contains(item))
+                return;
+
             if (item.querySelector("." + BUTTON_CLASS))
                 return;
 
@@ -2277,15 +2292,27 @@ function disableButtons (page, listOfButtonsToDisable) {
 
             const button = createButton(title);
 
-            // Boton cerca del título
             if (title.parentElement) {
-
                 title.parentElement.appendChild(button);
-
             } else {
-
                 item.appendChild(button);
+            }
 
+        });
+
+    }
+
+    function cleanupButtons() {
+
+        const rows = document.querySelector(config.rows);
+
+        if (!rows)
+            return;
+
+        document.querySelectorAll("." + BUTTON_CLASS).forEach(button => {
+
+            if (!rows.contains(button)) {
+                button.remove();
             }
 
         });
@@ -2304,35 +2331,45 @@ function disableButtons (page, listOfButtonsToDisable) {
         if (observerRows)
             observerRows.disconnect();
 
-        observerRows = new MutationObserver(() => {
+        observerRows = new MutationObserver((mutations) => {
 
+            let changed = false;
+
+            for (const mutation of mutations) {
+
+                if (mutation.addedNodes.length || mutation.removedNodes.length) {
+                    changed = true;
+                    break;
+                }
+
+            }
+
+            if (!changed)
+                return;
+
+            cleanupButtons();
             addButtons();
 
         });
 
         observerRows.observe(rows, {
-
             childList: true,
             subtree: true
-
         });
 
+        cleanupButtons();
         addButtons();
 
     }
 
     // Observa toda la página por si React reemplaza el listado
     const observerPage = new MutationObserver(() => {
-
         observeRows();
-
     });
 
     observerPage.observe(document.body, {
-
         childList: true,
         subtree: true
-
     });
 
     // Primer intento

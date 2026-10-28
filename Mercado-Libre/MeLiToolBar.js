@@ -1585,56 +1585,47 @@ function createButtonToSearchNotes () {
         if (!listOfSales) {
           throw new Error('No se encontró el listado de ventas')
         }
-        if (listOfSales.children.length === 0) {
+
+        const sales = listOfSales.querySelectorAll(':scope > .andes-card')
+        if (sales.length === 0) {
           throw new Error(`No se encontraron ventas para el ID: ${saleId}`)
-        } else if (listOfSales.children.length > 2) {
+        } else if (sales.length > 1) {
           throw new Error(
-            `Se encontraron multiples ventas para el ID: ${saleId}, omitiendo...`
+            `Se encontraron múltiples ventas para el ID: ${saleId}, omitiendo...`
           )
         }
-
-        // See if list of sales second child has class .andes-card else the list is empty
-        if (!listOfSales.children[1].classList.contains('andes-card')) {
-          throw new Error(`No se encontraron ventas para el ID: ${saleId}`)
-        }
-
-        // Get price, unidades and sku if exist, if not set as 'No disponible'
-        const price = listOfSales.children[1]
+        const sale = sales[0]
+        const price = sale
           .querySelector(
             'span.sc-product-data__price span.sc-product-data__value'
           )
-          .textContent.trim()
+          ?.textContent.trim()
         const unidades =
-          listOfSales.children[1]
+          sale
             .querySelector(
               'span.sc-product-data__qty span.sc-product-data__value'
             )
             ?.textContent.trim() || 'Cantidad no disponible'
         const sku =
-          listOfSales.children[1]
-            .querySelector(
-              'span.sc-product-data__sku span.sc-product-data__value'
-            )
-            ?.textContent.trim() || 'SKU no disponible'
-
+          sale
+            .querySelector('[data-testid="sku-value"]')
+            ?.getAttribute('aria-label')
+            ?.replace(/^SKU:\s*/, '')
+            .trim() || 'SKU no disponible'
         if (!price) {
           throw new Error('No se pudo obtener el precio de la venta')
         }
-
-        if (!unidades) {
+        if (unidades === 'Cantidad no disponible') {
           throw new Error('No se pudo obtener las unidades de la venta')
         }
-
-        if (!sku) {
+        if (sku === 'SKU no disponible') {
           throw new Error('No se pudo obtener el SKU de la venta')
         }
-        const dateOfSale = listOfSales.querySelector('.left-column__order-date')
+        const dateOfSale = sale.querySelector('.left-column__order-date')
         if (!dateOfSale) {
           throw new Error('No se encontró la fecha de la venta en el resultado')
         }
-
         const dateOfSaleText = dateOfSale.textContent.trim()
-
         const note =
           document.querySelector('.read-text')?.textContent.trim() || ''
 
